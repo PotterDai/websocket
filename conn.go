@@ -397,6 +397,10 @@ func (c *Conn) write(frameType int, deadline time.Time, bufs ...[]byte) error {
 	return nil
 }
 
+func (c *Conn) WriteClose() {
+	c.WriteControl(CloseMessage, nil, time.Now().Add(time.Second*5))
+}
+
 // WriteControl writes a control message with the given deadline. The allowed
 // message types are CloseMessage, PingMessage and PongMessage.
 func (c *Conn) WriteControl(messageType int, data []byte, deadline time.Time) error {
@@ -950,6 +954,9 @@ func (c *Conn) NextReader() (messageType int, r io.Reader, err error) {
 			}
 			return frameType, c.reader, nil
 		}
+		if isControl(frameType) {
+			return frameType, nil, nil
+		}
 	}
 
 	// Applications that do handle the error returned from this method spin in
@@ -1022,13 +1029,15 @@ func (c *Conn) ReadMessage() (messageType int, p []byte, err error) {
 	if err != nil {
 		return messageType, nil, err
 	}
-	p, err = ioutil.ReadAll(r)
+	if r != nil {
+		p, err = ioutil.ReadAll(r)
+	}
 	return messageType, p, err
 }
 
 // GetNetConn return net.Conn for this socket
-func (c *Conn) GetNetConn() *net.Conn {
-	return &c.conn
+func (c *Conn) GetNetConn() net.Conn {
+	return c.conn
 }
 
 // SetReadDeadline sets the read deadline on the underlying network connection.
