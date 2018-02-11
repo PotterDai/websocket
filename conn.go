@@ -1026,6 +1026,11 @@ func (c *Conn) ReadMessage() (messageType int, p []byte, err error) {
 	return messageType, p, err
 }
 
+// GetNetConn return net.Conn for this socket
+func (c *Conn) GetNetConn() *net.Conn {
+	return &c.conn
+}
+
 // SetReadDeadline sets the read deadline on the underlying network connection.
 // After a read has timed out, the websocket connection state is corrupt and
 // all future reads will return an error. A zero value for t means reads will
